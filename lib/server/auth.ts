@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import type { Profile, UserRole } from '../types';
-import { readDb } from './db';
+import { ensureSessionSecret, readDb } from './db';
 import { verifySessionToken } from './security';
 
 export const SESSION_COOKIE_NAME = 'jb_session';
@@ -21,6 +21,7 @@ export async function authenticateRequest(
   }
 
   if (!token) return null;
+  await ensureSessionSecret();
   const payload = verifySessionToken(token);
   if (!payload) return null;
 

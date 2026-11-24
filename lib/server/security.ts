@@ -3,6 +3,18 @@ import type { UserRole } from '../types';
 
 const globalForSecret = globalThis as unknown as { __juneberrySessionSecret?: string };
 
+/**
+ * Installs a persistent signing secret (loaded from the database) so session
+ * tokens stay valid across every server instance when SESSION_SECRET is unset.
+ */
+export function setSessionSecret(secret: string): void {
+  globalForSecret.__juneberrySessionSecret = secret;
+}
+
+export function hasSessionSecretFromEnv(): boolean {
+  return Boolean(process.env.SESSION_SECRET?.trim());
+}
+
 function getSessionSecret(): string {
   const envSecret = process.env.SESSION_SECRET?.trim();
   if (envSecret) return envSecret;
