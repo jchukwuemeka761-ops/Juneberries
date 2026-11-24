@@ -1,0 +1,6 @@
+{
+  "name": "JUNEBERRIES INTERNATIONAL SCHOOLS CBT Portal",
+  "description": "Production Computer-Based Testing (CBT) and Examination Management System for JUNEBERRIES INTERNATIONAL SCHOOLS (Primary 1 to SSS 3).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
