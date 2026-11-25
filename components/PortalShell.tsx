@@ -30,6 +30,7 @@ import LiveMonitoring from './LiveMonitoring';
 import ResultsAndReports from './ResultsAndReports';
 import AcademicAndAdminManager from './AcademicAndAdminManager';
 import CbtExamRunner from './CbtExamRunner';
+import ResultCheckerPanel from './ResultCheckerPanel';
 import {
   PortalSlideshowBackdrop,
   SlideshowSubheadingHero,
@@ -50,6 +51,7 @@ export type NavKey =
   | 'student-history'
   | 'student-results'
   | 'student-profile'
+  | 'result-checker'
   | 'questions'
   | 'exams'
   | 'monitoring'
@@ -74,7 +76,8 @@ function getNavForRole(role: UserRole): NavItem[] {
     return [
       { key: 'student-exams', label: 'Available Exams', icon: ClipboardCheck },
       { key: 'student-history', label: 'Exam History', icon: Calendar },
-      { key: 'student-results', label: 'Official Results', icon: Award },
+      { key: 'student-results', label: 'Semester Progress & Results', icon: Award },
+      { key: 'result-checker', label: 'CBT Result Checker', icon: FileSpreadsheet },
       { key: 'notifications', label: 'Notifications', icon: Bell },
       { key: 'student-profile', label: 'My Profile & Password', icon: Users },
     ];
@@ -87,10 +90,11 @@ function getNavForRole(role: UserRole): NavItem[] {
   }
   if (role === 'teacher') {
     return [
-      { key: 'questions', label: 'My Classes & Questions', icon: BookOpen },
+      { key: 'questions', label: 'Templates & Questions', icon: BookOpen },
       { key: 'exams', label: 'Quizzes & Exams', icon: Calendar },
       { key: 'essay-marking', label: 'Essay Marking', icon: ClipboardCheck },
       { key: 'results', label: 'Subject Reports', icon: Award },
+      { key: 'result-checker', label: 'CBT Result Checker', icon: FileSpreadsheet },
       { key: 'overview', label: 'Teacher Analytics', icon: BarChart3 },
       { key: 'notifications', label: 'Notifications', icon: Bell },
     ];
@@ -100,6 +104,7 @@ function getNavForRole(role: UserRole): NavItem[] {
       { key: 'overview', label: 'Department Analytics', icon: BarChart3 },
       { key: 'questions', label: 'Question Review', icon: BookOpen },
       { key: 'results', label: 'Department Results', icon: Award },
+      { key: 'result-checker', label: 'CBT Result Checker', icon: FileSpreadsheet },
       { key: 'notifications', label: 'Notifications', icon: Bell },
     ];
   }
@@ -109,6 +114,7 @@ function getNavForRole(role: UserRole): NavItem[] {
       { key: 'operations', label: 'Teacher & Student Monitor', icon: ClipboardCheck },
       { key: 'monitoring', label: 'Live Examinations', icon: Activity },
       { key: 'results', label: 'Academic Reports', icon: Award },
+      { key: 'result-checker', label: 'CBT Result Checker', icon: FileSpreadsheet },
       { key: 'students', label: 'Student Directory', icon: GraduationCap },
       { key: 'notifications', label: 'Notifications', icon: Bell },
     ];
@@ -117,9 +123,10 @@ function getNavForRole(role: UserRole): NavItem[] {
     return [
       { key: 'overview', label: 'Exam Overview', icon: BarChart3 },
       { key: 'exams', label: 'Exam Scheduling', icon: Calendar },
-      { key: 'questions', label: 'Question Upload Bank', icon: BookOpen },
+      { key: 'questions', label: 'Templates & Question Bank', icon: BookOpen },
       { key: 'monitoring', label: 'Live Monitoring', icon: Activity },
       { key: 'results', label: 'Results & Reports', icon: Award },
+      { key: 'result-checker', label: 'CBT Result Checker', icon: FileSpreadsheet },
       { key: 'notifications', label: 'Notifications', icon: Bell },
     ];
   }
@@ -131,10 +138,11 @@ function getNavForRole(role: UserRole): NavItem[] {
     { key: 'students', label: 'Students', icon: GraduationCap },
     { key: 'staff', label: 'Staff & Termination', icon: Users },
     { key: 'academics', label: 'Classes & Curriculum', icon: FileSpreadsheet },
-    { key: 'questions', label: 'Question Upload Bank', icon: BookOpen },
+    { key: 'questions', label: 'Templates & Question Bank', icon: BookOpen },
     { key: 'exams', label: 'Examinations', icon: Calendar },
     { key: 'monitoring', label: 'Live Monitoring', icon: Activity },
     { key: 'results', label: 'Results & Reports', icon: Award },
+    { key: 'result-checker', label: 'CBT Result Checker', icon: FileSpreadsheet },
     { key: 'announcements', label: 'Announcements', icon: Bell },
     { key: 'audit', label: 'Audit Logs', icon: Shield },
     { key: 'settings', label: 'System Settings', icon: Settings },
@@ -223,17 +231,17 @@ export default function PortalShell({
       <PortalSlideshowBackdrop scope={shellBackdropScope} />
 
       {/* Desktop Sidebar (260px) */}
-      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:h-screen lg:sticky lg:top-0 bg-[#0A1E3D]/95 backdrop-blur-md text-white shrink-0 border-r border-[#14305C] no-print z-20">
+      <aside className="hidden lg:flex lg:flex-col lg:w-64 lg:h-screen lg:sticky lg:top-0 bg-gradient-to-b from-[#1E103D]/95 via-[#2E1065]/95 to-[#0A1E3D]/95 backdrop-blur-md text-white shrink-0 border-r border-[#4C1D95]/60 no-print z-20">
         <div className="p-5 border-b border-white/10 flex items-center gap-3">
           <img
             src={data.settings.logoUrl || '/images/juneberry_crest.jpg'}
             alt="Juneberries Crest"
             referrerPolicy="no-referrer"
-            className="w-9 h-9 rounded-md object-cover border border-white/20 shrink-0"
+            className="w-9 h-9 rounded-md object-cover border border-[#FACC15]/40 shrink-0"
           />
           <div className="min-w-0">
             <div className="font-display text-sm font-bold truncate">Juneberries CBT</div>
-            <div className="text-[11px] text-[#E6C567] truncate">
+            <div className="text-[11px] font-semibold text-[#FACC15] truncate">
               {ROLE_LABELS[data.me.role]}
             </div>
           </div>
@@ -248,10 +256,10 @@ export default function PortalShell({
                 key={item.key}
                 type="button"
                 onClick={() => setActiveNav(item.key)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs font-medium transition-colors ${
+                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-xs transition-all ${
                   active
-                    ? 'bg-white/15 text-white font-semibold'
-                    : 'text-slate-300 hover:bg-white/10 hover:text-white'
+                    ? 'bg-[#FACC15] text-[#1E103D] font-bold shadow-sm'
+                    : 'text-purple-100 hover:bg-white/10 hover:text-white font-medium'
                 }`}
               >
                 <span className="flex items-center gap-2.5 truncate">
@@ -259,7 +267,11 @@ export default function PortalShell({
                   <span className="truncate">{item.label}</span>
                 </span>
                 {item.key === 'notifications' && unreadNotifs > 0 && (
-                  <span className="font-mono-tabular text-[11px] font-bold text-[#E6C567]">
+                  <span
+                    className={`font-mono-tabular text-[11px] font-bold ${
+                      active ? 'text-[#1E103D]' : 'text-[#FACC15]'
+                    }`}
+                  >
                     {unreadNotifs}
                   </span>
                 )}
@@ -298,9 +310,9 @@ export default function PortalShell({
             className="fixed inset-0 bg-slate-900/50"
             onClick={() => setMobileMenuOpen(false)}
           />
-          <div className="relative w-64 bg-[#0A1E3D] text-white flex flex-col z-10">
+          <div className="relative w-64 bg-gradient-to-b from-[#1E103D] via-[#2E1065] to-[#0A1E3D] text-white flex flex-col z-10">
             <div className="p-4 border-b border-white/10 flex items-center justify-between">
-              <span className="font-display text-sm font-bold">Juneberries CBT</span>
+              <span className="font-display text-sm font-bold text-[#FACC15]">Juneberries CBT</span>
               <button
                 type="button"
                 aria-label="Close navigation menu"
@@ -321,7 +333,9 @@ export default function PortalShell({
                       setMobileMenuOpen(false);
                     }}
                     className={`w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-xs font-medium ${
-                      activeNav === item.key ? 'bg-white/15 text-white' : 'text-slate-300'
+                      activeNav === item.key
+                        ? 'bg-[#FACC15] text-[#1E103D] font-bold'
+                        : 'text-purple-100'
                     }`}
                   >
                     <Icon className="w-4 h-4" />
@@ -334,7 +348,7 @@ export default function PortalShell({
               <button
                 type="button"
                 onClick={() => void handleLogout()}
-                className="w-full py-2 bg-white/10 rounded text-xs font-semibold"
+                className="w-full py-2 bg-[#FACC15] text-[#1E103D] rounded text-xs font-bold"
               >
                 Sign Out
               </button>
@@ -345,21 +359,21 @@ export default function PortalShell({
 
       {/* Main Content Viewport */}
       <div className="relative z-10 flex-1 flex flex-col min-w-0">
-        <header className="bg-white/92 backdrop-blur-md border-b border-slate-200/80 px-5 lg:px-8 py-4 flex items-center justify-between gap-4 no-print">
+        <header className="bg-white/95 backdrop-blur-md border-b border-purple-200/80 px-5 lg:px-8 py-4 flex items-center justify-between gap-4 no-print">
           <div className="flex items-center gap-3 min-w-0">
             <button
               type="button"
               aria-label="Open navigation menu"
               onClick={() => setMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg border border-slate-200 text-slate-700"
+              className="lg:hidden p-2 rounded-lg border border-purple-200 text-[#1E103D]"
             >
               <Menu className="w-4 h-4" />
             </button>
             <div className="min-w-0">
-              <div className="text-xs text-slate-500 truncate">
+              <div className="text-xs text-[#5B21B6] font-medium truncate">
                 {data.settings.schoolName} / {currentLabel}
               </div>
-              <h1 className="font-display text-lg font-bold text-[#0A1E3D] truncate">
+              <h1 className="font-display text-lg font-bold text-[#1E103D] truncate">
                 {currentLabel}
               </h1>
             </div>
@@ -369,15 +383,15 @@ export default function PortalShell({
             <button
               type="button"
               onClick={() => setActiveNav('notifications')}
-              className="px-3 py-1.5 text-xs font-medium border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-1.5 whitespace-nowrap"
+              className="px-3 py-1.5 text-xs font-medium border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center gap-1.5 whitespace-nowrap"
             >
-              <Bell className="w-3.5 h-3.5 text-[#0A1E3D]" />
+              <Bell className="w-3.5 h-3.5 text-[#4C1D95]" />
               <span>Alerts ({unreadNotifs})</span>
             </button>
             <button
               type="button"
               onClick={() => void handleLogout()}
-              className="hidden sm:inline-flex px-3.5 py-1.5 text-xs font-semibold border border-slate-300 rounded-lg hover:bg-slate-50 whitespace-nowrap"
+              className="hidden sm:inline-flex px-3.5 py-1.5 text-xs font-bold bg-[#FACC15] hover:bg-[#EAB308] text-[#1E103D] rounded-lg whitespace-nowrap"
             >
               Sign Out
             </button>
@@ -419,16 +433,16 @@ export default function PortalShell({
                     return (
                       <div
                         key={ex.id}
-                        className="bg-white border border-slate-200 rounded-xl p-5 flex flex-col justify-between gap-4"
+                        className="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-md"
                       >
                         <div className="space-y-2">
-                          <div className="text-xs text-slate-500">
+                          <div className="text-xs text-slate-600">
                             {sub?.name} · {EXAM_TYPE_LABELS[ex.examType]} ·{' '}
-                            <span className="font-semibold text-[#0A1E3D]">
+                            <span className="font-bold text-[#4C1D95]">
                               {ex.status.toUpperCase()}
                             </span>
                           </div>
-                          <h3 className="font-display text-base font-bold text-slate-900">
+                          <h3 className="font-display text-base font-bold text-[#1E103D]">
                             {ex.title}
                           </h3>
                           <div className="text-xs text-slate-600 font-mono-tabular">
@@ -445,7 +459,7 @@ export default function PortalShell({
                             <button
                               type="button"
                               onClick={() => setActiveCbtExam(ex)}
-                              className="px-4 py-2 bg-[#B8860B] hover:bg-[#9E7208] text-white text-xs font-semibold rounded-lg"
+                              className="px-4 py-2 bg-[#FACC15] hover:bg-[#EAB308] text-[#1E103D] text-xs font-bold rounded-lg shadow-sm"
                             >
                               Resume Active Exam
                             </button>
@@ -453,7 +467,7 @@ export default function PortalShell({
                             <button
                               type="button"
                               onClick={() => setActiveCbtExam(ex)}
-                              className="px-4 py-2 bg-[#0A1E3D] hover:bg-[#132E59] text-white text-xs font-semibold rounded-lg"
+                              className="px-4 py-2 bg-gradient-to-r from-[#4C1D95] to-[#0A1E3D] hover:from-[#5B21B6] hover:to-[#132E59] text-white text-xs font-bold rounded-lg shadow-sm"
                             >
                               Enter Examination
                             </button>
@@ -649,6 +663,15 @@ export default function PortalShell({
 
           {(activeNav === 'results' || activeNav === 'student-results') && (
             <ResultsAndReports data={data} onRefresh={onRefresh} initialTab="results" />
+          )}
+
+          {activeNav === 'result-checker' && (
+            <ResultCheckerPanel
+              sessions={data.sessions}
+              terms={data.terms}
+              defaultAdmissionNumber={data.studentRecord?.admissionNumber || ''}
+              settings={data.settings}
+            />
           )}
 
           {activeNav === 'essay-marking' && (

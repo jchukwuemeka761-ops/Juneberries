@@ -20,6 +20,7 @@ export type PortalScope =
   | 'teacher'
   | 'teacher_register'
   | 'questions'
+  | 'results_checker'
   | 'admin';
 
 export interface PortalAccessCheck {
@@ -32,7 +33,7 @@ export function validatePortalRoleAccess(
   role: UserRole,
   portalScope?: PortalScope
 ): PortalAccessCheck {
-  if (!portalScope || portalScope === 'gateway') {
+  if (!portalScope || portalScope === 'gateway' || portalScope === 'results_checker') {
     return { allowed: true };
   }
 

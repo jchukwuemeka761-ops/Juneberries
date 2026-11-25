@@ -9,6 +9,7 @@ import {
   Layers,
   Plus,
   Search,
+  Sparkles,
   Upload,
   X,
 } from 'lucide-react';
@@ -17,6 +18,7 @@ import { apiFetch } from '@/lib/api-client';
 import { QUESTION_CSV_TEMPLATE, type BulkImportReport } from '@/lib/bulk-import';
 import type { DifficultyLevel, QuestionApprovalStatus, QuestionType } from '@/lib/types';
 import { QUESTION_TYPE_LABELS } from '@/lib/types';
+import ExamTemplateStudio from './ExamTemplateStudio';
 
 interface QuestionBankManagerProps {
   data: PortalBootstrapData;
@@ -80,15 +82,25 @@ export default function QuestionBankManager({
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
 
-  const [showCreate, setShowCreate] = useState(openUploadByDefault);
+  const [showTemplateStudio, setShowTemplateStudio] = useState(isTeacher);
+  const [showCreate, setShowCreate] = useState(openUploadByDefault && !isTeacher);
   const [showBulk, setShowBulk] = useState(false);
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const defaultSessionId =
+    data.sessions.find((s) => s.isCurrent)?.id || data.sessions[0]?.id || 'sess_2026_2027';
+  const defaultTermId =
+    data.terms.find((t) => t.sessionId === defaultSessionId && t.isCurrent)?.id ||
+    data.terms.find((t) => t.sessionId === defaultSessionId)?.id ||
+    'term_1';
+
   // Manual Question Form
   const [classId, setClassId] = useState(initialClassId);
   const [subjectId, setSubjectId] = useState(initialSubjectId);
+  const [sessionId, setSessionId] = useState(defaultSessionId);
+  const [termId, setTermId] = useState(defaultTermId);
   const [topic, setTopic] = useState('');
   const [difficulty, setDifficulty] = useState<DifficultyLevel>('medium');
   const [marks, setMarks] = useState(2);
@@ -214,6 +226,8 @@ export default function QuestionBankManager({
           payload: {
             subjectId,
             classId,
+            sessionId,
+            termId,
             topic,
             difficulty,
             marks,
@@ -262,6 +276,8 @@ export default function QuestionBankManager({
           payload: {
             subjectId: bulkSubjectId,
             classId: bulkClassId,
+            sessionId,
+            termId,
             csvText,
             submitForApproval: true,
             autoApprove: isSuperAdmin && autoApproveAdmin,
@@ -309,13 +325,13 @@ export default function QuestionBankManager({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-md">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Question Upload Portal & Approval Bank
+          <h2 className="font-display text-lg font-bold text-[#1E103D]">
+            Question Upload Portal, Exam Templates &amp; Approval Bank
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {questions.length} total questions · Select any designated class below to upload or browse subject questions
+          <p className="text-xs text-slate-600 mt-0.5">
+            {questions.length} total questions · Select any designated class or CBT Exam Template below
           </p>
         </div>
 
@@ -323,10 +339,27 @@ export default function QuestionBankManager({
           <button
             type="button"
             onClick={() => {
-              setShowBulk((v) => !v);
+              setShowTemplateStudio((v) => !v);
+              setShowBulk(false);
               setShowCreate(false);
             }}
-            className="px-3.5 py-2 text-xs font-semibold border border-slate-300 rounded-lg text-slate-800 hover:bg-slate-50 flex items-center gap-1.5"
+            className={`px-3.5 py-2 text-xs font-bold rounded-lg flex items-center gap-1.5 transition-colors ${
+              showTemplateStudio
+                ? 'bg-[#FACC15] text-[#1E103D] shadow-sm'
+                : 'border border-purple-300 bg-purple-50 text-[#4C1D95] hover:bg-purple-100'
+            }`}
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>Exam Templates &amp; PDF Upload</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowBulk((v) => !v);
+              setShowCreate(false);
+              setShowTemplateStudio(false);
+            }}
+            className="px-3.5 py-2 text-xs font-semibold border border-purple-200 rounded-lg text-[#1E103D] hover:bg-purple-50 flex items-center gap-1.5"
           >
             <FileSpreadsheet className="w-4 h-4" />
             <span>Bulk CSV Upload</span>
@@ -336,14 +369,24 @@ export default function QuestionBankManager({
             onClick={() => {
               setShowCreate((v) => !v);
               setShowBulk(false);
+              setShowTemplateStudio(false);
             }}
-            className="px-4 py-2 text-xs font-semibold bg-[#0A1E3D] hover:bg-[#132E59] text-white rounded-lg flex items-center gap-1.5"
+            className="px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#4C1D95] to-[#0A1E3D] hover:from-[#5B21B6] hover:to-[#132E59] text-white rounded-lg flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4" />
-            <span>Upload Question</span>
+            <Plus className="w-4 h-4 text-[#FACC15]" />
+            <span>Single Question</span>
           </button>
         </div>
       </div>
+
+      {showTemplateStudio && (
+        <ExamTemplateStudio
+          data={data}
+          onRefresh={onRefresh}
+          initialClassId={classId}
+          initialSubjectId={subjectId}
+        />
+      )}
 
       {/* Interactive Class & Subject Switcher */}
       <div className="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
@@ -588,7 +631,48 @@ export default function QuestionBankManager({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <label htmlFor="q-session" className="block text-xs font-medium text-slate-700 mb-1">
+                Academic Session
+              </label>
+              <select
+                id="q-session"
+                value={sessionId}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSessionId(next);
+                  const first = data.terms.find((t) => t.sessionId === next);
+                  if (first) setTermId(first.id);
+                }}
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white"
+              >
+                {data.sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label htmlFor="q-term" className="block text-xs font-medium text-slate-700 mb-1">
+                Term / Semester
+              </label>
+              <select
+                id="q-term"
+                value={termId}
+                onChange={(e) => setTermId(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white"
+              >
+                {data.terms
+                  .filter((t) => t.sessionId === sessionId)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+              </select>
+            </div>
             <div>
               <label htmlFor="q-topic" className="block text-xs font-medium text-slate-700 mb-1">
                 Curriculum Topic
@@ -600,7 +684,7 @@ export default function QuestionBankManager({
                 placeholder="e.g. Algebraic Fractions"
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg"
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg"
               />
             </div>
 
@@ -613,7 +697,7 @@ export default function QuestionBankManager({
                 type="file"
                 accept="image/*"
                 onChange={handleImageFileChange}
-                className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-slate-100 file:text-slate-800"
+                className="w-full text-xs text-slate-600 file:mr-3 file:py-1.5 file:px-3 file:rounded-md file:border-0 file:bg-purple-50 file:text-[#4C1D95]"
               />
             </div>
           </div>

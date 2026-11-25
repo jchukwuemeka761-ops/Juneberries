@@ -23,7 +23,16 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
   const [error, setError] = useState<string | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
+  const defaultSessId =
+    data.sessions.find((s) => s.isCurrent)?.id || data.sessions[0]?.id || 'sess_2026_2027';
+  const defaultTermId =
+    data.terms.find((t) => t.sessionId === defaultSessId && t.isCurrent)?.id ||
+    data.terms.find((t) => t.sessionId === defaultSessId)?.id ||
+    'term_1';
+
   const [title, setTitle] = useState('');
+  const [sessionId, setSessionId] = useState(defaultSessId);
+  const [termId, setTermId] = useState(defaultTermId);
   const [classId, setClassId] = useState(data.classes[10]?.id || data.classes[0]?.id || '');
   const [subjectId, setSubjectId] = useState(data.subjects[14]?.id || data.subjects[0]?.id || '');
   const [examType, setExamType] = useState<ExaminationType>(
@@ -38,7 +47,7 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
   const [status, setStatus] = useState<ExaminationStatus>('active');
   const [randomiseQuestions, setRandomiseQuestions] = useState(true);
   const [randomiseOptions, setRandomiseOptions] = useState(true);
-  const [autoPublishObjectiveResults, setAutoPublishObjectiveResults] = useState(false);
+  const [autoPublishObjectiveResults, setAutoPublishObjectiveResults] = useState(true);
   const [instructions, setInstructions] = useState(data.settings.defaultInstructions);
   const [selectedQuestionIds, setSelectedQuestionIds] = useState<string[]>([]);
   const [autoSelectCount, setAutoSelectCount] = useState(0);
@@ -47,12 +56,19 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
   const eligibleApprovedQuestions = useMemo(() => {
     const allowUnapproved =
       data.me.role === 'super_admin' && data.settings.allowUnapprovedQuestionsByAdmin;
+    const isTeacherOwn = data.me.role === 'teacher';
     return questions.filter(
       (q) =>
         q.subjectId === subjectId &&
-        (allowUnapproved || q.approvalStatus === 'approved')
+        q.classId === classId &&
+        (allowUnapproved ||
+          q.approvalStatus === 'approved' ||
+          (isTeacherOwn &&
+            q.teacherProfileId === data.me.id &&
+            q.approvalStatus !== 'rejected' &&
+            q.approvalStatus !== 'archived'))
     );
-  }, [questions, subjectId, data.me.role, data.settings.allowUnapprovedQuestionsByAdmin]);
+  }, [questions, subjectId, classId, data.me.role, data.me.id, data.settings.allowUnapprovedQuestionsByAdmin]);
 
   const handleCreateExam = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,8 +82,8 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
           action: 'create',
           payload: {
             title,
-            sessionId: data.sessions.find((s) => s.isCurrent)?.id,
-            termId: data.terms.find((t) => t.isCurrent)?.id,
+            sessionId,
+            termId,
             classId,
             subjectId,
             examType,
@@ -119,13 +135,13 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-md">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            Examination Creation & Scheduling
+          <h2 className="font-display text-lg font-bold text-[#1E103D]">
+            Examination Creation &amp; Scheduling
           </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
-            {exams.length} examination{exams.length === 1 ? '' : 's'} configured for the active academic session
+          <p className="text-xs text-slate-600 mt-0.5">
+            {exams.length} examination{exams.length === 1 ? '' : 's'} configured across academic sessions and terms
           </p>
         </div>
 
@@ -133,9 +149,9 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
           <button
             type="button"
             onClick={() => setShowCreate((v) => !v)}
-            className="px-4 py-2 text-xs font-semibold bg-[#0A1E3D] hover:bg-[#132E59] text-white rounded-lg flex items-center gap-1.5"
+            className="px-4 py-2 text-xs font-bold bg-gradient-to-r from-[#4C1D95] to-[#0A1E3D] hover:from-[#5B21B6] hover:to-[#132E59] text-white rounded-lg flex items-center gap-1.5"
           >
-            <Plus className="w-4 h-4" />
+            <Plus className="w-4 h-4 text-[#FACC15]" />
             <span>Create Examination</span>
           </button>
         )}
@@ -183,8 +199,51 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
                 placeholder="e.g. SSS 2 First Term Chemistry Test"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg"
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg"
               />
+            </div>
+
+            <div>
+              <label htmlFor="ex-session" className="block text-xs font-medium text-slate-700 mb-1">
+                Academic Session
+              </label>
+              <select
+                id="ex-session"
+                value={sessionId}
+                onChange={(e) => {
+                  const next = e.target.value;
+                  setSessionId(next);
+                  const first = data.terms.find((t) => t.sessionId === next);
+                  if (first) setTermId(first.id);
+                }}
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white"
+              >
+                {data.sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label htmlFor="ex-term" className="block text-xs font-medium text-slate-700 mb-1">
+                Term / Semester
+              </label>
+              <select
+                id="ex-term"
+                value={termId}
+                onChange={(e) => setTermId(e.target.value)}
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white"
+              >
+                {data.terms
+                  .filter((t) => t.sessionId === sessionId)
+                  .map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+              </select>
             </div>
 
             <div>
@@ -195,7 +254,7 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
                 id="ex-class"
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white"
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white"
               >
                 {data.classes.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -216,7 +275,7 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
                   setSubjectId(e.target.value);
                   setSelectedQuestionIds([]);
                 }}
-                className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg bg-white"
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white"
               >
                 {data.subjects.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -482,11 +541,15 @@ export default function ExamManager({ data, onRefresh }: ExamManagerProps) {
               {exams.map((ex) => {
                 const cls = data.classes.find((c) => c.id === ex.classId);
                 const sub = data.subjects.find((s) => s.id === ex.subjectId);
+                const sess = data.sessions.find((s) => s.id === ex.sessionId);
+                const term = data.terms.find((t) => t.id === ex.termId);
                 return (
-                  <tr key={ex.id} className="hover:bg-slate-50">
+                  <tr key={ex.id} className="hover:bg-purple-50/40">
                     <td className="py-3.5 px-4">
                       <div className="font-semibold text-slate-900">{ex.title}</div>
-                      <div className="text-xs text-slate-500">{EXAM_TYPE_LABELS[ex.examType]}</div>
+                      <div className="text-xs text-[#4C1D95] font-medium">
+                        {EXAM_TYPE_LABELS[ex.examType]} · {sess?.name || 'Active Session'} · {term?.name || 'Term'}
+                      </div>
                     </td>
                     <td className="py-3.5 px-4 text-xs text-slate-700">
                       <div className="font-medium text-slate-900">{cls?.name}</div>

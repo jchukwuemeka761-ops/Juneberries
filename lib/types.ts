@@ -234,6 +234,8 @@ export interface Question {
   bankId?: string;
   subjectId: string;
   classId: string;
+  sessionId?: string;
+  termId?: string;
   topic: string;
   subtopic?: string;
   difficulty: DifficultyLevel;
@@ -504,3 +506,47 @@ export const QUESTION_TYPE_LABELS: Record<QuestionType, string> = {
   matching: 'Matching Pairs',
   image_based: 'Image-Based Question',
 };
+
+export type ExamTemplateType =
+  | 'mcq_4'
+  | 'mcq_2_ab'
+  | 'true_false'
+  | 'fill_in_gap'
+  | 'mixed';
+
+export const EXAM_TEMPLATE_LABELS: Record<
+  ExamTemplateType,
+  { title: string; badge: string; description: string }
+> = {
+  mcq_4: {
+    title: '4-Option Multiple Choice (A–D)',
+    badge: 'A · B · C · D',
+    description:
+      'Standard CBT multiple-choice format with 4 options (A, B, C, D) and automatic answer key marking.',
+  },
+  mcq_2_ab: {
+    title: '2-Option Choice (A or B)',
+    badge: 'A · B Only',
+    description:
+      'Focused two-option CBT format where candidates pick strictly between Option A and Option B.',
+  },
+  true_false: {
+    title: 'True / False Objective',
+    badge: 'True / False',
+    description:
+      'Binary proposition CBT template automatically evaluated against True or False keys.',
+  },
+  fill_in_gap: {
+    title: 'Fill in the Blank Space',
+    badge: '____ Gap',
+    description:
+      'Short-response gap-fill CBT template supporting exact & multi-variant keyword auto-marking.',
+  },
+  mixed: {
+    title: 'Mixed / Auto-Detect Document',
+    badge: 'Auto-Detect',
+    description:
+      'Automatically classifies A–D, A–B, True/False, Fill-in-Blank, and Essay items from uploaded PDFs.',
+  },
+};
+

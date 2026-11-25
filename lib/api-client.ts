@@ -23,40 +23,40 @@ import type {
   Subject,
   TeacherAssignment,
 } from './types';
-
-let inMemoryToken: string | null = null;
+import {
+  buildHealthPayload,
+  dispatchLocalApi,
+  getStoredSessionToken,
+  setStoredSessionToken,
+} from './local-backend';
 
 export function setAuthToken(token: string | null) {
-  inMemoryToken = token;
+  setStoredSessionToken(token);
 }
 
 export function getAuthToken(): string | null {
-  return inMemoryToken;
+  return getStoredSessionToken();
+}
+
+export function getHealthSnapshot(): HealthInfo {
+  return buildHealthPayload(getStoredSessionToken());
+}
+
+export function getBootstrapSnapshot(): PortalBootstrapData | null {
+  const token = getStoredSessionToken();
+  if (!token) return null;
+  try {
+    return dispatchLocalApi<PortalBootstrapData>('/api/portal/bootstrap', {}, token);
+  } catch {
+    return null;
+  }
 }
 
 export async function apiFetch<T>(
   path: string,
   options: RequestInit = {}
 ): Promise<T> {
-  const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type') && options.body) {
-    headers.set('Content-Type', 'application/json');
-  }
-  if (inMemoryToken) {
-    headers.set('Authorization', `Bearer ${inMemoryToken}`);
-  }
-
-  const res = await fetch(path, {
-    ...options,
-    headers,
-    credentials: 'include',
-  });
-
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) {
-    throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
-  }
-  return data as T;
+  return dispatchLocalApi<T>(path, options, getStoredSessionToken());
 }
 
 export interface HealthInfo {
@@ -81,7 +81,35 @@ export interface HealthInfo {
     levelGroup: string;
     applicableClassIds: string[];
   }>;
+  sessions: AcademicSession[];
+  terms: AcademicTerm[];
   sampleEnabled: boolean;
+}
+
+export interface ResultCheckResponse {
+  studentName: string;
+  admissionNumber: string;
+  className: string;
+  schoolName: string;
+  results: Array<{
+    id: string;
+    examTitle: string;
+    subjectName: string;
+    sessionId: string;
+    sessionName: string;
+    termId: string;
+    termName: string;
+    className: string;
+    objectiveScore: number;
+    subjectiveScore: number;
+    totalScore: number;
+    totalPossibleMarks: number;
+    percentage: number;
+    grade: string;
+    remark: string;
+    passed: boolean;
+    publishedAt?: string;
+  }>;
 }
 
 export interface PortalBootstrapData {

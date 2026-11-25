@@ -19,7 +19,7 @@ interface DashboardAnalyticsProps {
   data: PortalBootstrapData;
 }
 
-const CHART_COLORS = ['#0A1E3D', '#163A70', '#B8860B', '#0284C7', '#15803D', '#64748B'];
+const CHART_COLORS = ['#4C1D95', '#0A1E3D', '#EAB308', '#7C3AED', '#15803D', '#64748B'];
 
 export default function DashboardAnalytics({ data }: DashboardAnalyticsProps) {
   const [filterClassId, setFilterClassId] = useState<string>('all');
@@ -206,10 +206,10 @@ export default function DashboardAnalytics({ data }: DashboardAnalyticsProps) {
         ].map((card) => (
           <div
             key={card.label}
-            className="bg-white border border-slate-200 rounded-xl p-4 flex flex-col justify-between"
+            className="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-4 flex flex-col justify-between shadow-sm"
           >
-            <div className="text-xs font-medium text-slate-500">{card.label}</div>
-            <div className="font-mono-tabular text-2xl font-bold text-[#0A1E3D] mt-2">
+            <div className="text-xs font-medium text-slate-600">{card.label}</div>
+            <div className="font-mono-tabular text-2xl font-bold text-[#4C1D95] mt-2">
               {card.value}
             </div>
             <div className="text-xs text-slate-500 mt-1 leading-snug">{card.sub}</div>
@@ -219,9 +219,9 @@ export default function DashboardAnalytics({ data }: DashboardAnalyticsProps) {
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-5">
+        <div className="lg:col-span-7 bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="font-display text-sm font-semibold text-slate-900">
+            <h3 className="font-display text-sm font-semibold text-[#1E103D]">
               Student Enrolment Distribution by Class
             </h3>
             <span className="text-xs text-slate-500 font-mono-tabular">
@@ -231,11 +231,11 @@ export default function DashboardAnalytics({ data }: DashboardAnalyticsProps) {
           <div className="h-64 w-full">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={populationByClass} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#EDE9FE" vertical={false} />
                 <XAxis dataKey="name" tick={{ fontSize: 11, fill: '#475569' }} />
                 <YAxis allowDecimals={false} tick={{ fontSize: 11, fill: '#475569' }} />
                 <Tooltip />
-                <Bar dataKey="students" fill="#0A1E3D" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="students" fill="#5B21B6" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -293,11 +293,11 @@ export default function DashboardAnalytics({ data }: DashboardAnalyticsProps) {
             <div className="h-52 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={subjectPerformance} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#E2E8F0" vertical={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#EDE9FE" vertical={false} />
                   <XAxis dataKey="subject" tick={{ fontSize: 11, fill: '#475569' }} />
                   <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#475569' }} />
                   <Tooltip />
-                  <Bar dataKey="average" fill="#B8860B" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="average" fill="#EAB308" radius={[6, 6, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>

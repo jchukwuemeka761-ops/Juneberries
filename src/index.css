@@ -2,14 +2,18 @@
 
 @layer base {
   :root {
-    --font-display: var(--font-plus-jakarta), system-ui, sans-serif;
-    --font-sans: var(--font-dm-sans), system-ui, sans-serif;
-    --font-mono: var(--font-jetbrains-mono), monospace;
+    --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+    --font-sans: 'DM Sans', system-ui, sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+    --brand-purple: #4C1D95;
+    --brand-purple-bright: #6D28D9;
+    --brand-yellow: #FACC15;
+    --brand-navy: #0A1E3D;
   }
 
   body {
     font-family: var(--font-sans);
-    background-color: #f8fafc;
+    background-color: #160A33;
     color: #0f172a;
     -webkit-font-smoothing: antialiased;
   }

@@ -122,31 +122,31 @@ export function PortalSlideshowBackdrop({
   const resolvedIndex = activeIndex !== undefined ? activeIndex : autoIndex;
 
   return (
-    <div
-      aria-hidden="true"
-      className="fixed inset-0 -z-10 overflow-hidden bg-[#07162E] pointer-events-none"
-    >
-      {slides.map((slide, idx) => {
-        const isActive = idx === resolvedIndex % slides.length;
-        return (
-          <div
-            key={slide.src}
-            className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-              isActive ? 'opacity-100' : 'opacity-0'
-            }`}
-          >
-            <img
-              src={slide.src}
-              alt={slide.alt}
-              referrerPolicy="no-referrer"
-              className="w-full h-full object-cover animate-ken-burns"
-            />
-          </div>
-        );
-      })}
-      {/* Measured gradient scrim keeps photography vivid while protecting foreground legibility */}
-      <div className="absolute inset-0 bg-gradient-to-br from-[#061327]/72 via-[#0A1E3D]/48 to-[#061327]/76" />
-    </div>
+      <div
+        aria-hidden="true"
+        className="fixed inset-0 -z-10 overflow-hidden bg-[#160A33] pointer-events-none"
+      >
+        {slides.map((slide, idx) => {
+          const isActive = idx === resolvedIndex % slides.length;
+          return (
+            <div
+              key={slide.src}
+              className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
+                isActive ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              <img
+                src={slide.src}
+                alt={slide.alt}
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-cover animate-ken-burns"
+              />
+            </div>
+          );
+        })}
+        {/* Luminous purple-navy atmospheric scrim preserves live photography clarity and foreground contrast */}
+        <div className="absolute inset-0 bg-gradient-to-br from-[#2E1065]/72 via-[#0A1E3D]/48 to-[#4C1D95]/72" />
+      </div>
   );
 }
 
@@ -173,12 +173,12 @@ export function SlideshowSubheadingHero({
 
   return (
     <section
-      className={`relative rounded-xl overflow-hidden border border-white/20 text-white shadow-lg ${
+      className={`relative rounded-2xl overflow-hidden border border-[#FACC15]/30 text-white shadow-xl ${
         compact ? 'min-h-[190px]' : 'min-h-[260px]'
       }`}
     >
       {/* Interactive Video-Like Photo Slideshow Layer */}
-      <div className="absolute inset-0 bg-[#0A1E3D]">
+      <div className="absolute inset-0 bg-[#1E103D]">
         {slides.map((slide, idx) => {
           const isActive = idx === activeIndex % slides.length;
           return (
@@ -197,27 +197,27 @@ export function SlideshowSubheadingHero({
             </div>
           );
         })}
-        <div className="absolute inset-0 bg-gradient-to-r from-[#07152B]/88 via-[#0A1E3D]/68 to-[#07152B]/35" />
+        <div className="absolute inset-0 bg-gradient-to-r from-[#2E1065]/88 via-[#0A1E3D]/68 to-[#4C1D95]/35" />
       </div>
 
       {/* Foreground Subheading Copy & Interactive Slide Controls */}
       <div className="relative z-10 p-6 lg:p-8 flex flex-col justify-between gap-4 h-full">
         <div className="max-w-2xl space-y-2.5">
-          <div className="text-xs font-semibold text-[#E6C567] tracking-wide">
+          <div className="text-xs font-bold text-[#FACC15] tracking-wider uppercase">
             {eyebrow}
           </div>
           <h2 className="font-display text-2xl lg:text-3xl font-bold leading-tight text-balance">
             {title}
           </h2>
-          <p className="text-slate-100 text-sm leading-relaxed">{subtitle}</p>
+          <p className="text-purple-50 text-sm leading-relaxed">{subtitle}</p>
         </div>
 
         {children && <div className="pt-1">{children}</div>}
 
         <div className="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-white/15">
-          <div className="text-xs text-slate-200 min-w-0">
-            <span className="font-semibold text-[#E6C567]">{current.caption}</span>
-            <span className="hidden sm:inline text-slate-300"> — {current.detail}</span>
+          <div className="text-xs text-purple-100 min-w-0">
+            <span className="font-bold text-[#FACC15]">{current.caption}</span>
+            <span className="hidden sm:inline text-purple-200"> — {current.detail}</span>
           </div>
 
           <div className="flex items-center gap-1.5 shrink-0">
@@ -225,7 +225,7 @@ export function SlideshowSubheadingHero({
               type="button"
               aria-label="Previous slide"
               onClick={prevSlide}
-              className="p-1.5 rounded-md bg-black/40 hover:bg-black/60 text-white border border-white/20 transition-colors"
+              className="p-1.5 rounded-md bg-[#1E103D]/60 hover:bg-[#4C1D95]/80 text-white border border-white/25 transition-colors"
             >
               <ChevronLeft className="w-3.5 h-3.5" />
             </button>
@@ -233,7 +233,7 @@ export function SlideshowSubheadingHero({
               type="button"
               aria-label={paused ? 'Play slideshow' : 'Pause slideshow'}
               onClick={togglePause}
-              className="p-1.5 rounded-md bg-black/40 hover:bg-black/60 text-white border border-white/20 transition-colors"
+              className="p-1.5 rounded-md bg-[#1E103D]/60 hover:bg-[#4C1D95]/80 text-white border border-white/25 transition-colors"
             >
               {paused ? <Play className="w-3.5 h-3.5" /> : <Pause className="w-3.5 h-3.5" />}
             </button>
@@ -241,7 +241,7 @@ export function SlideshowSubheadingHero({
               type="button"
               aria-label="Next slide"
               onClick={nextSlide}
-              className="p-1.5 rounded-md bg-black/40 hover:bg-black/60 text-white border border-white/20 transition-colors"
+              className="p-1.5 rounded-md bg-[#1E103D]/60 hover:bg-[#4C1D95]/80 text-white border border-white/25 transition-colors"
             >
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
@@ -254,7 +254,7 @@ export function SlideshowSubheadingHero({
                   onClick={() => setActiveIndex(i)}
                   className={`h-1.5 rounded-full transition-all ${
                     i === activeIndex % slides.length
-                      ? 'w-5 bg-[#E6C567]'
+                      ? 'w-5 bg-[#FACC15]'
                       : 'w-2 bg-white/45 hover:bg-white/75'
                   }`}
                 />

@@ -1,8 +1,13 @@
-'use client';
-
-import React, { useCallback, useEffect, useState } from 'react';
-import Link from 'next/link';
-import { apiFetch, setAuthToken, type HealthInfo, type PortalBootstrapData } from '@/lib/api-client';
+import React, { useCallback, useState } from 'react';
+import { Link } from '@/lib/router';
+import {
+  apiFetch,
+  getBootstrapSnapshot,
+  getHealthSnapshot,
+  setAuthToken,
+  type HealthInfo,
+  type PortalBootstrapData,
+} from '@/lib/api-client';
 import { type PortalScope, validatePortalRoleAccess } from '@/lib/portal-routing';
 import AuthPortal from './AuthPortal';
 import PortalShell, { type NavKey } from './PortalShell';
@@ -16,9 +21,10 @@ export default function PortalWorkspace({
   portalScope,
   defaultNav,
 }: PortalWorkspaceProps) {
-  const [health, setHealth] = useState<HealthInfo | null>(null);
-  const [portalData, setPortalData] = useState<PortalBootstrapData | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [health, setHealth] = useState<HealthInfo>(() => getHealthSnapshot());
+  const [portalData, setPortalData] = useState<PortalBootstrapData | null>(() =>
+    getBootstrapSnapshot()
+  );
 
   const loadHealth = useCallback(async () => {
     const h = await apiFetch<HealthInfo>('/api/health');
@@ -34,32 +40,6 @@ export default function PortalWorkspace({
       setPortalData(null);
     }
   }, []);
-
-  useEffect(() => {
-    (async () => {
-      try {
-        const h = await loadHealth();
-        if (h.authenticated) {
-          await loadBootstrap();
-        }
-      } finally {
-        setLoading(false);
-      }
-    })();
-  }, [loadHealth, loadBootstrap]);
-
-  if (loading || !health) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-[#07162E] text-white">
-        <div className="bg-[#0A1E3D] border border-white/15 rounded-xl px-8 py-6 text-center space-y-2">
-          <div className="font-display text-base font-bold text-[#E6C567]">
-            JUNEBERRIES INTERNATIONAL SCHOOLS
-          </div>
-          <div className="text-xs text-slate-300">Loading examination workspace...</div>
-        </div>
-      </div>
-    );
-  }
 
   // Registration routes always display their dedicated registration portal unless user switches
   if (
@@ -83,9 +63,9 @@ export default function PortalWorkspace({
   const accessCheck = validatePortalRoleAccess(portalData.me.role, portalScope);
   if (!accessCheck.allowed) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-[#F8FAFC] p-6">
-        <div className="max-w-md w-full bg-white border border-slate-200 rounded-xl p-7 space-y-4 text-center">
-          <div className="font-display text-lg font-bold text-[#0A1E3D]">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#2E1065] via-[#0A1E3D] to-[#4C1D95] p-6">
+        <div className="max-w-md w-full bg-white/95 backdrop-blur-md border border-purple-200/70 rounded-2xl p-7 space-y-4 text-center shadow-2xl">
+          <div className="font-display text-lg font-bold text-[#1E103D]">
             Signed In as {portalData.me.fullName}
           </div>
           <p className="text-sm text-slate-600">{accessCheck.error}</p>
@@ -93,7 +73,7 @@ export default function PortalWorkspace({
             {accessCheck.redirectPath && (
               <Link
                 href={accessCheck.redirectPath}
-                className="px-4 py-2 bg-[#0A1E3D] text-white text-xs font-semibold rounded-lg"
+                className="px-4 py-2 bg-[#4C1D95] hover:bg-[#5B21B6] text-white text-xs font-semibold rounded-lg"
               >
                 Open My Portal
               </Link>
@@ -106,7 +86,7 @@ export default function PortalWorkspace({
                 setPortalData(null);
                 await loadHealth();
               }}
-              className="px-4 py-2 border border-slate-300 text-slate-700 text-xs font-semibold rounded-lg hover:bg-slate-50"
+              className="px-4 py-2 border border-purple-200 text-[#1E103D] text-xs font-semibold rounded-lg hover:bg-purple-50"
             >
               Sign Out &amp; Switch Account
             </button>

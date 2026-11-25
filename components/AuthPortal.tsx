@@ -1,9 +1,10 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
+import { Link } from '@/lib/router';
 import {
   ArrowRight,
+  Award,
   BookOpen,
   CheckCircle2,
   Eye,
@@ -24,6 +25,7 @@ import {
   SlideshowSubheadingHero,
   usePortalSlideshow,
 } from './PortalSlideshowBackdrop';
+import ResultCheckerPanel from './ResultCheckerPanel';
 
 interface AuthPortalProps {
   health: HealthInfo;
@@ -77,6 +79,12 @@ const PORTAL_HEADINGS: Record<
     title: 'General Admin & Proprietor Portal',
     subtitle:
       'Authorized executive portal to monitor teachers’ operations, students’ operations, question approvals, and manage or deactivate staff accounts.',
+  },
+  results_checker: {
+    eyebrow: 'CBT Center · Official Academic Transcript Verification',
+    title: 'CBT Result Checker',
+    subtitle:
+      'Check published examination scores, percentage grades, and download official PDF result slips across any session (2020/2021–2028/2029) and term.',
   },
 };
 
@@ -347,6 +355,7 @@ export default function AuthPortal({
       label: 'Teachers',
       scope: ['teacher', 'questions'] as PortalScope[],
     },
+    { href: '/results', label: 'Result Checker', scope: ['results_checker'] as PortalScope[] },
     { href: '/admin', label: 'General Admin', scope: ['admin'] as PortalScope[] },
   ];
 
@@ -358,22 +367,22 @@ export default function AuthPortal({
       <PortalSlideshowBackdrop scope={portalScope} activeIndex={activeIndex} />
 
       {/* Three-Zone Top Bar */}
-      <header className="relative z-20 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 lg:px-10 py-3.5 sm:py-4 flex items-center justify-between gap-3 sm:gap-8">
+      <header className="relative z-20 bg-white/95 backdrop-blur-md border-b border-purple-200/80 px-4 sm:px-6 lg:px-10 py-3.5 sm:py-4 flex items-center justify-between gap-3 sm:gap-8 shadow-sm">
         <Link href="/" className="flex items-center gap-2.5 sm:gap-3 text-left min-w-0">
           <img
             src={health.logoUrl || '/images/juneberry_crest.jpg'}
             alt="JUNEBERRIES INTERNATIONAL SCHOOLS Crest"
             referrerPolicy="no-referrer"
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-md object-cover border border-slate-200 shrink-0"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-md object-cover border border-purple-200 shrink-0"
           />
-          <span className="font-display text-sm sm:text-base font-bold tracking-tight text-[#0A1E3D] truncate">
+          <span className="font-display text-sm sm:text-base font-bold tracking-tight text-[#1E103D] truncate">
             {schoolDisplayName}
           </span>
         </Link>
 
         <nav
           aria-label="Portal Navigation"
-          className="hidden md:flex items-center gap-6 text-sm font-medium text-slate-600 shrink-0"
+          className="hidden md:flex items-center gap-5 text-sm font-medium text-slate-600 shrink-0"
         >
           {navLinks.map((item) => {
             const active = item.scope.includes(portalScope);
@@ -383,8 +392,8 @@ export default function AuthPortal({
                 href={item.href}
                 className={`whitespace-nowrap shrink-0 transition-colors ${
                   active
-                    ? 'text-[#0A1E3D] font-semibold underline underline-offset-8 decoration-[#B8860B] decoration-2'
-                    : 'hover:text-slate-900'
+                    ? 'text-[#4C1D95] font-bold underline underline-offset-8 decoration-[#FACC15] decoration-2'
+                    : 'hover:text-[#4C1D95]'
                 }`}
               >
                 {item.label}
@@ -396,7 +405,7 @@ export default function AuthPortal({
         <div className="shrink-0 flex items-center gap-2">
           <Link
             href="/teacher/register"
-            className="px-3 sm:px-4 py-2 text-xs font-semibold text-white bg-[#0A1E3D] rounded-lg hover:bg-[#132E59] transition-colors whitespace-nowrap shrink-0"
+            className="px-3 sm:px-4 py-2 text-xs font-bold text-[#1E103D] bg-[#FACC15] hover:bg-[#EAB308] rounded-lg transition-colors whitespace-nowrap shrink-0 shadow-sm"
           >
             Teacher Sign Up
           </Link>
@@ -404,15 +413,15 @@ export default function AuthPortal({
       </header>
 
       {/* Mobile Portal Nav */}
-      <div className="relative z-20 flex md:hidden items-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur-md border-b border-slate-200/80 overflow-x-auto text-xs font-medium">
+      <div className="relative z-20 flex md:hidden items-center gap-2 px-4 py-2.5 bg-white/95 backdrop-blur-md border-b border-purple-200/80 overflow-x-auto text-xs font-medium">
         {navLinks.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={`px-3 py-1.5 rounded-md whitespace-nowrap shrink-0 ${
               item.scope.includes(portalScope)
-                ? 'bg-[#0A1E3D] text-white font-semibold'
-                : 'bg-slate-100 text-slate-700'
+                ? 'bg-[#4C1D95] text-white font-semibold'
+                : 'bg-purple-50 text-[#1E103D]'
             }`}
           >
             {item.label}
@@ -433,18 +442,18 @@ export default function AuthPortal({
             >
               <div className="grid grid-cols-3 gap-4 pt-3 border-t border-white/15 max-w-lg">
                 <div>
-                  <div className="font-mono-tabular text-2xl font-semibold">12</div>
-                  <div className="text-xs text-slate-200">Classes (Pry 1–SSS 3)</div>
+                  <div className="font-mono-tabular text-2xl font-bold text-[#FACC15]">12</div>
+                  <div className="text-xs text-purple-100">Classes (Pry 1–SSS 3)</div>
                 </div>
                 <div>
-                  <div className="font-mono-tabular text-2xl font-semibold">
+                  <div className="font-mono-tabular text-2xl font-bold text-[#FACC15]">
                     {health.subjects.length}
                   </div>
-                  <div className="text-xs text-slate-200">Active Subjects</div>
+                  <div className="text-xs text-purple-100">Active Subjects</div>
                 </div>
                 <div>
-                  <div className="font-mono-tabular text-2xl font-semibold">5</div>
-                  <div className="text-xs text-slate-200">Dedicated Portals</div>
+                  <div className="font-mono-tabular text-2xl font-bold text-[#FACC15]">6</div>
+                  <div className="text-xs text-purple-100">Dedicated Portals</div>
                 </div>
               </div>
             </SlideshowSubheadingHero>
@@ -453,20 +462,20 @@ export default function AuthPortal({
               {/* 1. Student Login */}
               <Link
                 href="/student"
-                className="group bg-white/95 backdrop-blur-md border border-white/50 hover:border-[#0A1E3D] rounded-xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
+                className="group bg-white/95 backdrop-blur-md border border-purple-200/70 hover:border-[#6D28D9] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
               >
                 <div className="space-y-2.5">
-                  <div className="w-10 h-10 rounded-lg bg-[#0A1E3D]/10 text-[#0A1E3D] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#4C1D95] flex items-center justify-center">
                     <GraduationCap className="w-5 h-5" />
                   </div>
-                  <h2 className="font-display text-lg font-bold text-slate-900">
+                  <h2 className="font-display text-lg font-bold text-[#1E103D]">
                     Student Login Portal
                   </h2>
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    Sign in with your Exam Number, Registration Number, or Email to access CBT exams and questions set for your class.
+                    Sign in with your Exam Number, Registration Number, or Email to access CBT exams and track all-term progress.
                   </p>
                 </div>
-                <div className="text-xs font-semibold text-[#0A1E3D] flex items-center gap-1.5 group-hover:underline">
+                <div className="text-xs font-bold text-[#4C1D95] flex items-center gap-1.5 group-hover:underline">
                   <span>Enter Student Login</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
@@ -475,42 +484,42 @@ export default function AuthPortal({
               {/* 2. Student Registration */}
               <Link
                 href="/student/register"
-                className="group bg-white/95 backdrop-blur-md border border-white/50 hover:border-[#0A1E3D] rounded-xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
+                className="group bg-white/95 backdrop-blur-md border border-purple-200/70 hover:border-[#6D28D9] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
               >
                 <div className="space-y-2.5">
-                  <div className="w-10 h-10 rounded-lg bg-[#B8860B]/15 text-[#9A6F04] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#FACC15]/30 text-[#1E103D] flex items-center justify-center">
                     <UserPlus className="w-5 h-5" />
                   </div>
-                  <h2 className="font-display text-lg font-bold text-slate-900">
+                  <h2 className="font-display text-lg font-bold text-[#1E103D]">
                     Student Registration Portal
                   </h2>
                   <p className="text-sm text-slate-600 leading-relaxed">
                     New student? Sign up directly using your exam or admission number, student email, and academic class (Primary 1–SSS 3).
                   </p>
                 </div>
-                <div className="text-xs font-semibold text-[#0A1E3D] flex items-center gap-1.5 group-hover:underline">
+                <div className="text-xs font-bold text-[#4C1D95] flex items-center gap-1.5 group-hover:underline">
                   <span>Register as a Student</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </Link>
 
-              {/* 3. Teacher Login & Per-Class Dashboard */}
+              {/* 3. Teacher Login & Exam Template Studio */}
               <Link
                 href="/teacher"
-                className="group bg-white/95 backdrop-blur-md border border-white/50 hover:border-[#0A1E3D] rounded-xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
+                className="group bg-white/95 backdrop-blur-md border border-purple-200/70 hover:border-[#6D28D9] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
               >
                 <div className="space-y-2.5">
-                  <div className="w-10 h-10 rounded-lg bg-[#0A1E3D]/10 text-[#0A1E3D] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-purple-100 text-[#4C1D95] flex items-center justify-center">
                     <BookOpen className="w-5 h-5" />
                   </div>
-                  <h2 className="font-display text-lg font-bold text-slate-900">
-                    Teacher Login &amp; Question Studio
+                  <h2 className="font-display text-lg font-bold text-[#1E103D]">
+                    Teacher Login &amp; Exam Studio
                   </h2>
                   <p className="text-sm text-slate-600 leading-relaxed">
-                    Teachers sign in to open their class-by-class dashboard and upload questions for each class and subject they teach.
+                    Teachers sign in to open CBT exam templates, upload PDF question packs with answer keys, and set per-class tests across any session or term.
                   </p>
                 </div>
-                <div className="text-xs font-semibold text-[#0A1E3D] flex items-center gap-1.5 group-hover:underline">
+                <div className="text-xs font-bold text-[#4C1D95] flex items-center gap-1.5 group-hover:underline">
                   <span>Teacher Sign In</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
@@ -519,42 +528,64 @@ export default function AuthPortal({
               {/* 4. Teacher Registration */}
               <Link
                 href="/teacher/register"
-                className="group bg-white/95 backdrop-blur-md border border-white/50 hover:border-[#0A1E3D] rounded-xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
+                className="group bg-white/95 backdrop-blur-md border border-purple-200/70 hover:border-[#6D28D9] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
               >
                 <div className="space-y-2.5">
-                  <div className="w-10 h-10 rounded-lg bg-[#B8860B]/15 text-[#9A6F04] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#FACC15]/30 text-[#1E103D] flex items-center justify-center">
                     <Layers className="w-5 h-5" />
                   </div>
-                  <h2 className="font-display text-lg font-bold text-slate-900">
+                  <h2 className="font-display text-lg font-bold text-[#1E103D]">
                     Teacher Registration Portal
                   </h2>
                   <p className="text-sm text-slate-600 leading-relaxed">
                     Teachers sign up here with their email and password and choose every class (Primary 1–SSS 3) and subject they handle.
                   </p>
                 </div>
-                <div className="text-xs font-semibold text-[#0A1E3D] flex items-center gap-1.5 group-hover:underline">
+                <div className="text-xs font-bold text-[#4C1D95] flex items-center gap-1.5 group-hover:underline">
                   <span>Register &amp; Select Classes</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
               </Link>
 
-              {/* 5. General Admin / Proprietor Portal */}
+              {/* 5. CBT Center Result Checker */}
               <Link
-                href="/admin"
-                className="md:col-span-2 group bg-[#0A1E3D]/92 backdrop-blur-md text-white border border-white/20 hover:bg-[#132E59] rounded-xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
+                href="/results"
+                className="group bg-white/95 backdrop-blur-md border border-purple-200/70 hover:border-[#6D28D9] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-lg transition-all"
               >
                 <div className="space-y-2.5">
-                  <div className="w-10 h-10 rounded-lg bg-white/10 text-[#E6C567] flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-xl bg-[#0A1E3D]/10 text-[#0A1E3D] flex items-center justify-center">
+                    <Award className="w-5 h-5" />
+                  </div>
+                  <h2 className="font-display text-lg font-bold text-[#1E103D]">
+                    CBT Center Result Checker
+                  </h2>
+                  <p className="text-sm text-slate-600 leading-relaxed">
+                    Verify official published scores by Exam/Registration Number across all academic years (2020/2021–2028/2029) and terms, and download PDF slips.
+                  </p>
+                </div>
+                <div className="text-xs font-bold text-[#4C1D95] flex items-center gap-1.5 group-hover:underline">
+                  <span>Open Result Checker</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </div>
+              </Link>
+
+              {/* 6. General Admin / Proprietor Portal */}
+              <Link
+                href="/admin"
+                className="group bg-gradient-to-br from-[#2E1065]/95 via-[#4C1D95]/95 to-[#0A1E3D]/95 backdrop-blur-md text-white border border-[#FACC15]/40 hover:border-[#FACC15] rounded-2xl p-6 flex flex-col justify-between gap-4 shadow-xl transition-all"
+              >
+                <div className="space-y-2.5">
+                  <div className="w-10 h-10 rounded-xl bg-white/10 text-[#FACC15] flex items-center justify-center">
                     <ShieldCheck className="w-5 h-5" />
                   </div>
                   <h2 className="font-display text-lg font-bold text-white">
-                    General Admin &amp; Proprietor Executive Portal
+                    General Admin &amp; Proprietor Portal
                   </h2>
-                  <p className="text-sm text-slate-200 leading-relaxed max-w-2xl">
-                    Dedicated executive portal for the Proprietor, CEO, School Owner, Principal, and Exam Officer to monitor teachers’ operations, students’ exam progress, and deactivate or remove staff accounts.
+                  <p className="text-sm text-purple-100 leading-relaxed">
+                    Executive portal for the Proprietor, CEO, Principal, and Exam Officer to monitor teachers, students, results, and staff accounts.
                   </p>
                 </div>
-                <div className="text-xs font-semibold text-[#E6C567] flex items-center gap-1.5 group-hover:underline">
+                <div className="text-xs font-bold text-[#FACC15] flex items-center gap-1.5 group-hover:underline">
                   <span>Open General Admin Portal</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </div>
@@ -576,7 +607,7 @@ export default function AuthPortal({
                 {portalScope === 'student' && (
                   <Link
                     href="/student/register"
-                    className="font-semibold text-[#E6C567] hover:underline"
+                    className="font-bold text-[#FACC15] hover:underline"
                   >
                     New Student? Register in the Student Registration Portal →
                   </Link>
@@ -584,7 +615,7 @@ export default function AuthPortal({
                 {portalScope === 'student_register' && (
                   <Link
                     href="/student"
-                    className="font-semibold text-[#E6C567] hover:underline"
+                    className="font-bold text-[#FACC15] hover:underline"
                   >
                     Already registered? Sign in at the Student Login Portal →
                   </Link>
@@ -592,7 +623,7 @@ export default function AuthPortal({
                 {(portalScope === 'teacher' || portalScope === 'questions') && (
                   <Link
                     href="/teacher/register"
-                    className="font-semibold text-[#E6C567] hover:underline"
+                    className="font-bold text-[#FACC15] hover:underline"
                   >
                     New Teacher? Register &amp; select your classes/subjects →
                   </Link>
@@ -600,19 +631,24 @@ export default function AuthPortal({
                 {portalScope === 'teacher_register' && (
                   <Link
                     href="/teacher"
-                    className="font-semibold text-[#E6C567] hover:underline"
+                    className="font-bold text-[#FACC15] hover:underline"
                   >
                     Already registered? Sign in at the Teacher Login Portal →
                   </Link>
                 )}
-                <Link href="/" className="text-slate-200 hover:text-white hover:underline">
+                <Link href="/" className="text-purple-100 hover:text-white hover:underline">
                   ← Back to All Portals
                 </Link>
               </div>
             </SlideshowSubheadingHero>
 
-            {/* Focused Form Container (Translucent Surface Over Live Campus Slideshow) */}
-            <section className="max-w-3xl mx-auto bg-white/95 backdrop-blur-md rounded-xl border border-white/60 shadow-2xl p-6 sm:p-8 lg:p-9">
+            {portalScope === 'results_checker' ? (
+              <div className="max-w-5xl mx-auto">
+                <ResultCheckerPanel sessions={health.sessions} terms={health.terms} />
+              </div>
+            ) : (
+              /* Focused Form Container (Translucent Surface Over Live Campus Slideshow) */
+              <section className="max-w-3xl mx-auto bg-white/95 backdrop-blur-md rounded-2xl border border-purple-200/70 shadow-2xl p-6 sm:p-8 lg:p-9">
               {error && (
                 <div role="alert" className="mb-5 p-3.5 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
                   {error}
@@ -950,7 +986,7 @@ export default function AuthPortal({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 px-4 bg-[#0A1E3D] hover:bg-[#132E59] disabled:opacity-50 text-white text-sm font-semibold rounded-lg flex items-center justify-center gap-2 transition-colors"
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-[#4C1D95] to-[#0A1E3D] hover:from-[#5B21B6] hover:to-[#132E59] disabled:opacity-50 text-white text-sm font-bold rounded-lg flex items-center justify-center gap-2 transition-colors"
                   >
                     <span>
                       {loading
@@ -963,7 +999,7 @@ export default function AuthPortal({
                               ? 'Sign In to General Admin Portal'
                               : 'Sign In to Teacher Dashboard'}
                     </span>
-                    <ArrowRight className="w-4 h-4" />
+                    <ArrowRight className="w-4 h-4 text-[#FACC15]" />
                   </button>
 
                   {portalScope === 'student' && (
@@ -1133,7 +1169,7 @@ export default function AuthPortal({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 px-4 bg-[#0A1E3D] hover:bg-[#132E59] disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-[#4C1D95] to-[#0A1E3D] hover:from-[#5B21B6] hover:to-[#132E59] disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-colors"
                   >
                     {loading ? 'Registering Student...' : 'Complete Student Registration'}
                   </button>
@@ -1357,7 +1393,7 @@ export default function AuthPortal({
                   <button
                     type="submit"
                     disabled={loading}
-                    className="w-full py-2.5 px-4 bg-[#0A1E3D] hover:bg-[#132E59] disabled:opacity-50 text-white text-sm font-semibold rounded-lg transition-colors"
+                    className="w-full py-2.5 px-4 bg-gradient-to-r from-[#4C1D95] to-[#0A1E3D] hover:from-[#5B21B6] hover:to-[#132E59] disabled:opacity-50 text-white text-sm font-bold rounded-lg transition-colors"
                   >
                     {loading
                       ? 'Creating Teacher Account...'
@@ -1366,6 +1402,7 @@ export default function AuthPortal({
                 </form>
               )}
             </section>
+            )}
           </div>
         )}
       </main>

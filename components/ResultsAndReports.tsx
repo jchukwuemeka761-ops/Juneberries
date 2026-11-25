@@ -1,7 +1,16 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
-import { CheckCircle2, Download, FileText, Lock, Printer } from 'lucide-react';
+import { Award, CheckCircle2, Download, FileText, Lock, Printer, TrendingUp } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import type { PortalBootstrapData } from '@/lib/api-client';
 import { apiFetch } from '@/lib/api-client';
 import {
@@ -12,11 +21,12 @@ import {
   exportRowsToExcel,
 } from '@/lib/exports';
 import type { ExaminationResult, ResultStatus } from '@/lib/types';
+import ResultCheckerPanel from './ResultCheckerPanel';
 
 interface ResultsAndReportsProps {
   data: PortalBootstrapData;
   onRefresh: () => Promise<void>;
-  initialTab?: 'results' | 'essay_marking';
+  initialTab?: 'results' | 'essay_marking' | 'checker';
 }
 
 export default function ResultsAndReports({
@@ -28,9 +38,11 @@ export default function ResultsAndReports({
   const canApprovePublish = ['super_admin', 'exam_officer'].includes(data.me.role);
   const canMarkEssay = ['super_admin', 'exam_officer', 'teacher', 'hod'].includes(data.me.role);
 
-  const [subTab, setSubTab] = useState<'results' | 'essay_marking'>(initialTab);
+  const [subTab, setSubTab] = useState<'results' | 'essay_marking' | 'checker'>(initialTab);
   const [filterClass, setFilterClass] = useState('all');
   const [filterSubject, setFilterSubject] = useState('all');
+  const [filterSession, setFilterSession] = useState('all');
+  const [filterTerm, setFilterTerm] = useState('all');
   const [search, setSearch] = useState('');
 
   const [error, setError] = useState<string | null>(null);
@@ -51,10 +63,20 @@ export default function ResultsAndReports({
   const answers = data.answers || [];
   const attempts = data.attempts || [];
 
+  const uniqueTermNames = useMemo(() => {
+    const names = Array.from(new Set(data.terms.map((t) => t.name)));
+    return names.length > 0 ? names : ['First Term', 'Second Term', 'Third Term'];
+  }, [data.terms]);
+
   const filteredResults = useMemo(() => {
     return results.filter((r) => {
       if (filterClass !== 'all' && r.classId !== filterClass) return false;
       if (filterSubject !== 'all' && r.subjectId !== filterSubject) return false;
+      if (filterSession !== 'all' && r.sessionId !== filterSession) return false;
+      if (filterTerm !== 'all') {
+        const t = data.terms.find((term) => term.id === r.termId);
+        if (t?.name !== filterTerm) return false;
+      }
       if (search.trim()) {
         const stu = students.find((s) => s.id === r.studentId);
         const prof = stu ? profiles.find((p) => p.id === stu.profileId) : undefined;
@@ -67,7 +89,29 @@ export default function ResultsAndReports({
       }
       return true;
     });
-  }, [results, filterClass, filterSubject, search, students, profiles]);
+  }, [results, filterClass, filterSubject, filterSession, filterTerm, data.terms, search, students, profiles]);
+
+  const semesterProgressData = useMemo(() => {
+    const grouped = new Map<string, { label: string; totalPct: number; count: number; passed: number }>();
+    for (const r of results) {
+      const sess = data.sessions.find((s) => s.id === r.sessionId);
+      const term = data.terms.find((t) => t.id === r.termId);
+      const key = `${r.sessionId}_${term?.name || r.termId}`;
+      const shortSess = (sess?.name || '').replace(' Academic Session', '');
+      const label = `${shortSess} · ${term?.name || 'Term'}`.trim();
+      const entry = grouped.get(key) || { label, totalPct: 0, count: 0, passed: 0 };
+      entry.totalPct += r.percentage;
+      entry.count += 1;
+      if (r.passed) entry.passed += 1;
+      grouped.set(key, entry);
+    }
+    return Array.from(grouped.values()).map((g) => ({
+      semester: g.label,
+      average: Math.round((g.totalPct / g.count) * 10) / 10,
+      exams: g.count,
+      passed: g.passed,
+    }));
+  }, [results, data.sessions, data.terms]);
 
   const manualQueue = useMemo(() => {
     return answers.filter((a) => a.requiresManualMarking);
@@ -171,48 +215,66 @@ export default function ResultsAndReports({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white border border-slate-200 rounded-xl p-5 flex flex-wrap items-center justify-between gap-4">
+      <div className="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-5 flex flex-wrap items-center justify-between gap-4 shadow-md">
         <div>
-          <h2 className="font-display text-lg font-bold text-slate-900">
-            {isStudent ? 'Official Released Results & Transcripts' : 'Results Management, Grading & Exports'}
-          </h2>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <h2 className="font-display text-lg font-bold text-[#1E103D]">
             {isStudent
-              ? 'Only results verified and published by Juneberry administration appear here.'
+              ? 'My Academic Progress & Official Results'
+              : 'Results Management, Result Checker & Exports'}
+          </h2>
+          <p className="text-xs text-slate-600 mt-0.5">
+            {isStudent
+              ? 'Track your performance across all academic semesters and verify official published grades.'
               : `${filteredResults.length} result record(s) · ${manualQueue.filter((a) => !a.markedByProfileId).length} essay response(s) awaiting manual marking`}
           </p>
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
-          {!isStudent && canMarkEssay && (
-            <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg mr-2">
-              <button
-                type="button"
-                onClick={() => setSubTab('results')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md ${
-                  subTab === 'results' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
-                }`}
-              >
-                Results Ledger
-              </button>
+          <div className="flex items-center gap-1 p-1 bg-purple-100/70 rounded-lg mr-1">
+            <button
+              type="button"
+              onClick={() => setSubTab('results')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                subTab === 'results'
+                  ? 'bg-[#4C1D95] text-white shadow-sm'
+                  : 'text-[#1E103D] hover:bg-white/60'
+              }`}
+            >
+              {isStudent ? 'All-Semester Progress' : 'Results Ledger'}
+            </button>
+            {!isStudent && canMarkEssay && (
               <button
                 type="button"
                 onClick={() => setSubTab('essay_marking')}
-                className={`px-3 py-1.5 text-xs font-medium rounded-md ${
-                  subTab === 'essay_marking' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600'
+                className={`px-3 py-1.5 text-xs font-semibold rounded-md transition-colors ${
+                  subTab === 'essay_marking'
+                    ? 'bg-[#4C1D95] text-white shadow-sm'
+                    : 'text-[#1E103D] hover:bg-white/60'
                 }`}
               >
                 Essay Marking ({manualQueue.filter((a) => !a.markedByProfileId).length})
               </button>
-            </div>
-          )}
+            )}
+            <button
+              type="button"
+              onClick={() => setSubTab('checker')}
+              className={`px-3 py-1.5 text-xs font-semibold rounded-md inline-flex items-center gap-1 transition-colors ${
+                subTab === 'checker'
+                  ? 'bg-[#FACC15] text-[#1E103D] shadow-sm font-bold'
+                  : 'text-[#1E103D] hover:bg-white/60'
+              }`}
+            >
+              <Award className="w-3.5 h-3.5" />
+              <span>Result Checker</span>
+            </button>
+          </div>
 
-          {!isStudent && (
+          {!isStudent && subTab === 'results' && (
             <>
               <button
                 type="button"
                 onClick={() => handleExport('pdf')}
-                className="px-3 py-2 text-xs font-medium border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-1.5"
+                className="px-3 py-2 text-xs font-medium border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center gap-1.5"
               >
                 <FileText className="w-3.5 h-3.5" />
                 <span>PDF</span>
@@ -220,7 +282,7 @@ export default function ResultsAndReports({
               <button
                 type="button"
                 onClick={() => handleExport('xlsx')}
-                className="px-3 py-2 text-xs font-medium border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-1.5"
+                className="px-3 py-2 text-xs font-medium border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center gap-1.5"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Excel</span>
@@ -228,14 +290,14 @@ export default function ResultsAndReports({
               <button
                 type="button"
                 onClick={() => handleExport('csv')}
-                className="px-3 py-2 text-xs font-medium border border-slate-300 rounded-lg hover:bg-slate-50"
+                className="px-3 py-2 text-xs font-medium border border-purple-200 rounded-lg hover:bg-purple-50"
               >
                 CSV
               </button>
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="px-3 py-2 text-xs font-medium border border-slate-300 rounded-lg hover:bg-slate-50 flex items-center gap-1.5 no-print"
+                className="px-3 py-2 text-xs font-medium border border-purple-200 rounded-lg hover:bg-purple-50 flex items-center gap-1.5 no-print"
               >
                 <Printer className="w-3.5 h-3.5" />
                 <span>Print</span>
@@ -254,6 +316,15 @@ export default function ResultsAndReports({
         <div role="status" className="p-3.5 rounded-lg bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
           {feedback}
         </div>
+      )}
+
+      {subTab === 'checker' && (
+        <ResultCheckerPanel
+          sessions={data.sessions}
+          terms={data.terms}
+          defaultAdmissionNumber={data.studentRecord?.admissionNumber || ''}
+          settings={data.settings}
+        />
       )}
 
       {/* ESSAY MANUAL MARKING VIEW */}
@@ -363,24 +434,107 @@ export default function ResultsAndReports({
         </div>
       )}
 
-      {/* RESULTS LEDGER */}
+      {/* RESULTS LEDGER & STUDENT ALL-SEMESTER PROGRESS */}
       {subTab === 'results' && (
         <>
-          {!isStudent && (
-            <div className="bg-white border border-slate-200 rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-              <div className="flex flex-wrap items-center gap-3 flex-1">
+          {isStudent && semesterProgressData.length > 0 && (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+              <div className="lg:col-span-4 bg-gradient-to-br from-[#2E1065] via-[#4C1D95] to-[#0A1E3D] text-white rounded-2xl p-5 flex flex-col justify-between gap-4 shadow-lg">
+                <div>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-bold text-[#FACC15] uppercase tracking-wider">
+                    <TrendingUp className="w-4 h-4" />
+                    <span>All-Semester Summary</span>
+                  </div>
+                  <div className="font-mono-tabular text-3xl font-bold mt-2 text-white">
+                    {results.length > 0
+                      ? `${Math.round((results.reduce((acc, r) => acc + r.percentage, 0) / results.length) * 10) / 10}%`
+                      : '0%'}
+                  </div>
+                  <div className="text-xs text-purple-100 mt-1">
+                    Cumulative average across {semesterProgressData.length} term{semesterProgressData.length === 1 ? '' : 's'} ({results.length} published script{results.length === 1 ? '' : 's'})
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 pt-3 border-t border-white/15 text-xs">
+                  <div>
+                    <div className="text-purple-200">Subjects Passed</div>
+                    <div className="font-mono-tabular text-lg font-bold text-[#FACC15]">
+                      {results.filter((r) => r.passed).length}/{results.length}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-purple-200">Best Term Avg</div>
+                    <div className="font-mono-tabular text-lg font-bold text-emerald-300">
+                      {Math.max(...semesterProgressData.map((d) => d.average))}%
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="lg:col-span-8 bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-5 shadow-md">
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-display text-sm font-bold text-[#1E103D]">
+                    Term-by-Term Academic Progress (%)
+                  </h3>
+                  <span className="text-xs text-slate-500">All Academic Semesters</span>
+                </div>
+                <div className="h-44 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={semesterProgressData} margin={{ top: 8, right: 12, left: -16, bottom: 0 }}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#EDE9FE" vertical={false} />
+                      <XAxis dataKey="semester" tick={{ fontSize: 11, fill: '#1E103D' }} />
+                      <YAxis domain={[0, 100]} tick={{ fontSize: 11, fill: '#4C1D95' }} />
+                      <Tooltip />
+                      <Bar dataKey="average" name="Term Average %" fill="#5B21B6" radius={[6, 6, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="bg-white/95 backdrop-blur-md border border-purple-200/80 rounded-2xl p-4 flex flex-wrap items-center justify-between gap-3 shadow-sm">
+            <div className="flex flex-wrap items-center gap-3 flex-1">
+              {!isStudent && (
                 <input
                   type="search"
                   placeholder="Search student name or admission no..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg w-full sm:w-72"
+                  className="px-3 py-1.5 text-xs border border-purple-200 rounded-lg w-full sm:w-64"
                 />
+              )}
+              <select
+                aria-label="Filter results by session"
+                value={filterSession}
+                onChange={(e) => setFilterSession(e.target.value)}
+                className="px-3 py-1.5 text-xs border border-purple-200 rounded-lg bg-white"
+              >
+                <option value="all">All Academic Sessions</option>
+                {data.sessions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
+              <select
+                aria-label="Filter results by term"
+                value={filterTerm}
+                onChange={(e) => setFilterTerm(e.target.value)}
+                className="px-3 py-1.5 text-xs border border-purple-200 rounded-lg bg-white"
+              >
+                <option value="all">All Terms</option>
+                {uniqueTermNames.map((tn) => (
+                  <option key={tn} value={tn}>
+                    {tn}
+                  </option>
+                ))}
+              </select>
+              {!isStudent && (
                 <select
                   aria-label="Filter results by class"
                   value={filterClass}
                   onChange={(e) => setFilterClass(e.target.value)}
-                  className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
+                  className="px-3 py-1.5 text-xs border border-purple-200 rounded-lg bg-white"
                 >
                   <option value="all">All Classes</option>
                   {data.classes.map((c) => (
@@ -389,38 +543,38 @@ export default function ResultsAndReports({
                     </option>
                   ))}
                 </select>
-                <select
-                  aria-label="Filter results by subject"
-                  value={filterSubject}
-                  onChange={(e) => setFilterSubject(e.target.value)}
-                  className="px-3 py-1.5 text-xs border border-slate-300 rounded-lg bg-white"
-                >
-                  <option value="all">All Subjects</option>
-                  {data.subjects.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {canApprovePublish && filteredResults.some((r) => r.status !== 'published' && r.manualGradingCompleted) && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const readyIds = filteredResults
-                      .filter((r) => r.status !== 'published' && r.manualGradingCompleted)
-                      .map((r) => r.id);
-                    void handleStatusChange(readyIds, 'published');
-                  }}
-                  className="px-3.5 py-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg flex items-center gap-1.5"
-                >
-                  <CheckCircle2 className="w-3.5 h-3.5" />
-                  <span>Publish All Ready Results</span>
-                </button>
               )}
+              <select
+                aria-label="Filter results by subject"
+                value={filterSubject}
+                onChange={(e) => setFilterSubject(e.target.value)}
+                className="px-3 py-1.5 text-xs border border-purple-200 rounded-lg bg-white"
+              >
+                <option value="all">All Subjects</option>
+                {data.subjects.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                  </option>
+                ))}
+              </select>
             </div>
-          )}
+
+            {canApprovePublish && filteredResults.some((r) => r.status !== 'published' && r.manualGradingCompleted) && (
+              <button
+                type="button"
+                onClick={() => {
+                  const readyIds = filteredResults
+                    .filter((r) => r.status !== 'published' && r.manualGradingCompleted)
+                    .map((r) => r.id);
+                  void handleStatusChange(readyIds, 'published');
+                }}
+                className="px-3.5 py-1.5 text-xs font-semibold bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg flex items-center gap-1.5"
+              >
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                <span>Publish All Ready Results</span>
+              </button>
+            )}
+          </div>
 
           <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
             {filteredResults.length === 0 ? (
